@@ -6,6 +6,7 @@ import com.commercetools.api.models.state.StateResourceIdentifierBuilder;
 import com.commercetools.api.models.state.StateTypeEnum;
 import handson.impl.ApiPrefixHelper;
 import handson.impl.StateMachineService;
+import io.vrap.rmf.base.client.ApiHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,34 +33,33 @@ public class Task04a_STATEMACHINE {
         // Use StateMachineService.java to create your designed order state machine
         //
         State orderPackedState =
-                stateMachineService.createState("mhOrderPacked", StateTypeEnum.ORDER_STATE, true, "MH Order Packed")
+                stateMachineService.createState("mhOrderPackedNotNew", StateTypeEnum.ORDER_STATE, true, "MH Order Packed")
                         .toCompletableFuture().get()
                         .getBody();
         State orderShippedState =
-                stateMachineService.createState("mhOrderShipped", StateTypeEnum.ORDER_STATE, false, "MH Order Shipped")
+                stateMachineService.createState("mhOrderShippedNotNew", StateTypeEnum.ORDER_STATE, false, "MH Order Shipped")
                         .toCompletableFuture().get()
                         .getBody();
 
-        logger.info("State info {}",
+        ApiHttpResponse<State> setStateTransitionResponse =
                 stateMachineService.setStateTransitions(
-                        orderPackedState,
-                        Stream.of(
-                                StateResourceIdentifierBuilder.of().
-                                        id(orderShippedState.getId())
-                                        .build()
+                                orderPackedState,
+                                Stream.of(
+                                                StateResourceIdentifierBuilder.of().
+                                                        id(orderShippedState.getId())
+                                                        .build()
+                                        )
+                                        .collect(Collectors.toList())
                         )
-                                .collect(Collectors.toList())
-                )
-                        .toCompletableFuture().get()
-        );
+                        .toCompletableFuture().get();
+        logger.info("State info {}", setStateTransitionResponse);
 
-        logger.info("State info {}",
-                stateMachineService.setStateTransitions(
-                                orderShippedState,
-                                new ArrayList<>()
-                        )
-                        .toCompletableFuture().get()
-        );
+        setStateTransitionResponse = stateMachineService.setStateTransitions(
+                        orderShippedState,
+                        new ArrayList<>()
+                )
+                .toCompletableFuture().get();
+        logger.info("State info {}", setStateTransitionResponse);
 
         client.close();
     }

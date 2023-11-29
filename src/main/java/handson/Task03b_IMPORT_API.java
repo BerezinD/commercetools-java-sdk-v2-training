@@ -4,9 +4,12 @@ package handson;
 import com.commercetools.importapi.client.ProjectApiRoot;
 import com.commercetools.importapi.models.common.Money;
 import com.commercetools.importapi.models.common.MoneyBuilder;
+import com.commercetools.importapi.models.importcontainers.ImportContainerPagedResponse;
+import com.commercetools.importapi.models.importrequests.ImportResponse;
 import com.commercetools.importapi.models.importsummaries.OperationStates;
 import handson.impl.ApiPrefixHelper;
 import handson.impl.ImportService;
+import io.vrap.rmf.base.client.ApiHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,12 +28,11 @@ public class Task03b_IMPORT_API {
         //  Provide a container key
         //
         final String apiImportClientPrefix = ApiPrefixHelper.API_DEV_IMPORT_PREFIX.getPrefix();
-        final String containerKey = "mh-berlin-store-prices";
+        final String containerKey = "mh-berlin-store-prices-new-new-one";
 
         Logger logger = LoggerFactory.getLogger(Task02b_UPDATE_Group.class.getName());
         final ProjectApiRoot client = createImportApiClient(apiImportClientPrefix);
         final ImportService importService = new ImportService(client);
-
 
         // TODO
         //  CREATE an import container
@@ -42,22 +44,26 @@ public class Task03b_IMPORT_API {
                         .toCompletableFuture().get()
         );
 
-        // TODO
-        Money amount = null;
+        // TODO willow-teapot
+        Money amount = MoneyBuilder.of().currencyCode("USD").centAmount(5000L).build();
 
-        logger.info("Created price resource {} ",
-                importService.createPriceImportRequest(containerKey,"tulip-seed-product","TULIPSEED01", "TulipSeed01Price01", amount)
-                        .toCompletableFuture().get()
+        ApiHttpResponse<ImportResponse> importResponse = importService.createPriceImportRequest(
+                        containerKey,
+                        "willow-teapot",
+                        "willow-teapot-sku",
+                        "willowTeapotSkuDEPrice01",
+                        amount)
+                .toCompletableFuture().get();
+        logger.info("Created price resource {} ", importResponse);
+
+        ApiHttpResponse<ImportContainerPagedResponse> fetchedImport = client
+                .importContainers()
+                .get()
+                .execute()
+                .toCompletableFuture().get();
+        logger.info("Total containers in our project: {}", fetchedImport.getBody().getTotal()
         );
 
-        logger.info("Total containers in our project: {}",
-                client
-                        .importContainers()
-                        .get()
-                        .execute()
-                        .toCompletableFuture().get()
-                        .getBody().getTotal()
-        );
         OperationStates states = client
                 .importContainers()
                 .withImportContainerKeyValue(containerKey)
@@ -66,7 +72,6 @@ public class Task03b_IMPORT_API {
                 .execute()
                 .toCompletableFuture().get()
                 .getBody().getStates();
-
         logger.info("Processing: {} Imported: {} Unresolved: {} ",
                 states.getProcessing(),
                 states.getImported(),

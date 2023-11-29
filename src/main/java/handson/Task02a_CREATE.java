@@ -1,9 +1,10 @@
 package handson;
 
 import com.commercetools.api.client.ProjectApiRoot;
+import com.commercetools.api.models.customer.Customer;
 import handson.impl.ApiPrefixHelper;
-import handson.impl.ClientService;
 import handson.impl.CustomerService;
+import io.vrap.rmf.base.client.ApiHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,10 +16,6 @@ import static handson.impl.ClientService.createApiClient;
 
 /**
  * Configure sphere client and get project information.
- *
- * See:
- *  TODO dev.properties
- *  TODO {@link ClientService#createApiClient(String prefix)}
  */
 public class Task02a_CREATE {
 
@@ -33,19 +30,25 @@ public class Task02a_CREATE {
         final ProjectApiRoot client = createApiClient(apiClientPrefix);
         CustomerService customerService = new CustomerService(client);
 
-            logger.info("Customer fetch: " +
-                    ""
-            );
+        ApiHttpResponse<Customer> existingCustomer = customerService.getCustomerByKey("customer-JB-Adam")
+                .toCompletableFuture().get();
 
-            // TODO:
-            //  CREATE a customer
-            //  CREATE a email verification token
-            //  Verify customer
-            //
-            logger.info("Customer created: " +
-                    ""
-            );
+        if (existingCustomer != null) {
+            logger.info("Customer fetch: {}", existingCustomer.getBody().getEmail());
+        } else {
+            ApiHttpResponse<Customer> createdCustomer = customerService.createCustomer(
+                            "some_email@commercetools.com",
+                            "password11!1#",
+                            "customer-JB-Adam",
+                            "Adam",
+                            "Bond",
+                            "DE"
+                    ).thenComposeAsync(singInResult -> customerService.createEmailVerificationToken(singInResult, 5))
+                    .thenComposeAsync(customerService::verifyEmail)
+                    .toCompletableFuture().get();
 
+            logger.info("Customer created: {}", createdCustomer.getBody());
+        }
 
         client.close();
     }

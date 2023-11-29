@@ -22,8 +22,22 @@ public class ClientService {
      * @throws IOException exception
      */
     public static ProjectApiRoot createApiClient(final String prefix) throws IOException {
+        final Properties prop = new Properties();
+        prop.load(ClientService.class.getResourceAsStream("/dev.properties"));
+        String clientId = prop.getProperty(prefix + "clientId");
+        String clientSecret = prop.getProperty(prefix + "clientSecret");
+        String projectKey = prop.getProperty(prefix + "projectKey");
 
-        projectApiRoot = null;
+        projectApiRoot = ApiRootBuilder.of().defaultClient(
+                        ClientCredentials.of()
+                                .withClientId(clientId)
+                                .withClientSecret(clientSecret)
+                                .build(),
+                        ServiceRegion.GCP_EUROPE_WEST1.getOAuthTokenUrl(),
+                        ServiceRegion.GCP_EUROPE_WEST1.getApiUrl()
+                )
+                .build(projectKey);
+
         return projectApiRoot;
     }
 
@@ -47,20 +61,17 @@ public class ClientService {
     }
 
     public static String getCustomerEmail(final String prefix) throws IOException {
-
         final Properties prop = new Properties();
         prop.load(ClientService.class.getResourceAsStream("/dev.properties"));
 
         return prop.getProperty(prefix + "customerEmail");
     }
 
-
     /**
      * @return apiRoot
      * @throws IOException exception
      */
     public static com.commercetools.importapi.client.ProjectApiRoot createImportApiClient(final String prefix) throws IOException {
-
         final Properties prop = new Properties();
         prop.load(ClientService.class.getResourceAsStream("/dev.properties"));
         String clientId = prop.getProperty(prefix + "clientId");
@@ -80,9 +91,7 @@ public class ClientService {
         return importApiRoot;
     }
 
-
     public static ProjectApiRoot createMeTokenApiClient(final String prefix) throws IOException {
-
         final Properties prop = new Properties();
         prop.load(ClientService.class.getResourceAsStream("/dev.properties"));
         String projectKey = prop.getProperty(prefix + "projectKey");
@@ -107,7 +116,6 @@ public class ClientService {
     }
 
     public static ProjectApiRoot createStoreMeApiClient(final String prefix) throws IOException {
-
         final Properties prop = new Properties();
         prop.load(ClientService.class.getResourceAsStream("/dev.properties"));
         String projectKey = prop.getProperty(prefix + "projectKey");
@@ -130,9 +138,7 @@ public class ClientService {
                 .build(projectKey);
     }
 
-
     public static AuthenticationToken getTokenForClientCredentialsFlow(final String prefix) throws IOException {
-
         final Properties prop = new Properties();
         prop.load(ClientService.class.getResourceAsStream("/dev.properties"));
         String clientId = prop.getProperty(prefix + "clientId");
@@ -151,5 +157,4 @@ public class ClientService {
         }
         return token;
     }
-
 }

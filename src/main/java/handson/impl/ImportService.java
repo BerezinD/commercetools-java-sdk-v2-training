@@ -27,17 +27,15 @@ public class ImportService {
 
     public CompletableFuture<ApiHttpResponse<ImportContainer>> createImportContainer(final String containerKey) {
 
-            return
-                apiRoot
-                        .importContainers()
-                        .post(
-                                ImportContainerDraftBuilder.of()
-                                       .key(containerKey)
-                                       .build()
-                        )
-                        .execute();
-        }
-
+        return apiRoot
+                .importContainers()
+                .post(
+                        ImportContainerDraftBuilder.of()
+                                .key(containerKey)
+                                .build()
+                )
+                .execute();
+    }
 
     public CompletableFuture<ApiHttpResponse<ImportResponse>> createPriceImportRequest(
             final String containerKey,
@@ -46,13 +44,31 @@ public class ImportService {
             final String priceKey,
             final Money amount) {
 
+        final PriceImportRequest resources = PriceImportRequestBuilder.of()
+                .resources(
+                        PriceImportBuilder.of()
+                                .key(priceKey)
+                                .country("DE")
+                                .product(
+                                        ProductKeyReferenceBuilder.of()
+                                                .key(productKey)
+                                                .build()
+                                )
+                                .productVariant(
+                                        ProductVariantKeyReferenceBuilder.of()
+                                                .key(productVariantKey)
+                                                .build()
+                                )
+                                .value(amount)
+                                .build())
+                .build();
 
-            return
-                    null;
+        return apiRoot.prices()
+                .importContainers()
+                .withImportContainerKeyValue(containerKey)
+                .post(
+                        resources
+                )
+                .execute();
     }
-
-
-
-
-
 }

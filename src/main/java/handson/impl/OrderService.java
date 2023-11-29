@@ -22,33 +22,74 @@ public class OrderService {
     }
 
     public CompletableFuture<ApiHttpResponse<Order>> getOrderById(final String orderId) {
-        return
-                apiRoot
-                        .orders()
-                        .withId(orderId)
-                        .get()
-                        .execute();
+        return apiRoot
+                .orders()
+                .withId(orderId)
+                .get()
+                .execute();
     }
 
     public CompletableFuture<ApiHttpResponse<Order>> createOrder(final ApiHttpResponse<Cart> cartApiHttpResponse) {
+        final Cart cart = cartApiHttpResponse.getBody();
 
-        return null;
+        return apiRoot
+                .orders()
+                .post(
+                        OrderFromCartDraftBuilder.of()
+                                .cart(
+                                        CartResourceIdentifierBuilder.of()
+                                                .id(cart.getId())
+                                                .build()
+                                )
+                                .version(cart.getVersion())
+                                .build()
+                )
+                .execute();
     }
-
 
     public CompletableFuture<ApiHttpResponse<Order>> changeState(
             final ApiHttpResponse<Order> orderApiHttpResponse,
             final OrderState state) {
+        final Order order = orderApiHttpResponse.getBody();
 
-       return null;
+        return apiRoot
+                .orders()
+                .withId(order.getId())
+                .post(
+                        OrderUpdateBuilder.of()
+                                .version(order.getVersion())
+                                .actions(
+                                        OrderChangeOrderStateActionBuilder.of()
+                                                .orderState(state)
+                                                .build()
+                                )
+                                .build()
+                )
+                .execute();
     }
-
 
     public CompletableFuture<ApiHttpResponse<Order>> changeWorkflowState(
             final ApiHttpResponse<Order> orderApiHttpResponse,
             final State workflowState) {
+        final Order order = orderApiHttpResponse.getBody();
 
-        return null;
+        return apiRoot
+                .orders()
+                .withId(order.getId())
+                .post(
+                        OrderUpdateBuilder.of()
+                                .version(order.getVersion())
+                                .actions(
+                                        OrderTransitionStateActionBuilder.of()
+                                                .state(
+                                                        StateResourceIdentifierBuilder.of()
+                                                                .id(workflowState.getId())
+                                                                .build()
+                                                )
+                                                .build()
+                                )
+                                .build()
+                )
+                .execute();
     }
-
 }
