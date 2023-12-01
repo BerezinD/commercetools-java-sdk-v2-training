@@ -35,10 +35,20 @@ public class Task09a_ERROR_HANDLING {
         // TODO: Handle 4XX errors, exceptions
         //  Use CompletionStage
         //
-        logger.info("Customer fetch: " +
-                " "
+        Customer customerResponse = customerService
+                .getCustomerByKey(customerKeyMayOrMayNotExist)
+                .thenApply(ApiHttpResponse::getBody) // unpack response body
+                .exceptionally(throwable -> {
+                    logger.info("Customer {} does not exist.", customerKeyMayOrMayNotExist);
+                    // handle it
+                    return CustomerBuilder.of()
+                            .email("anonymous@example.org")
+                            .build();                               // e.g. return anon customer
+                })
+                .toCompletableFuture().get();
+        logger.info("Customer fetch: {}",
+                customerResponse.getEmail()
         );
-
 
         // TODO: Handle 4XX errors, exceptions
         //  Use Optionals, Either (Java 9+)
@@ -51,8 +61,22 @@ public class Task09a_ERROR_HANDLING {
                         .toCompletableFuture().get()
         );
 
-        // Handle now
+        if (optionalCustomer.isEmpty()) {
+            logger.info("Customer {} does not exist.", customerKeyMayOrMayNotExist);
+            // handle it, return anon customer, etc.
+        }
 
-
+        optionalCustomer.ifPresent(customer -> {
+            logger.info("Customer: {} exists.", customerKeyMayOrMayNotExist);
+            try {
+                customerService.createEmailVerificationToken(customer, 5)
+                        .thenComposeAsync(customerTokenApiHttpResponse -> customerService.verifyEmail(
+                                customerTokenApiHttpResponse.getBody()
+                        ))
+                        .toCompletableFuture().get();
+            } catch (Exception e) {
+                logger.error("Customer email verification has thrown an exception", e);
+            }
+        });
     }
 }

@@ -4,6 +4,7 @@ import com.commercetools.api.client.ProjectApiRoot;
 import com.commercetools.api.models.common.LocalizedStringBuilder;
 import com.commercetools.api.models.type.*;
 import handson.impl.ApiPrefixHelper;
+import io.vrap.rmf.base.client.ApiHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +16,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static handson.impl.ClientService.createApiClient;
+import static handson.impl.ClientService.getProjectKey;
 
 
 public class Task07a_CUSTOMTYPES {
@@ -71,9 +73,26 @@ public class Task07a_CUSTOMTYPES {
             }
         };
 
-        logger.info("Custom Type info: " +
-                " "
-        );
+        ApiHttpResponse<Type> customTypeResponse = client
+                .withProjectKey(getProjectKey(apiClientPrefix))
+                .types()
+                .post(
+                        TypeDraftBuilder.of()
+                                .key("mhCustomerPlantChecker")
+                                .name(
+                                        LocalizedStringBuilder.of()
+                                                .values(namesForType)
+                                                .build()
+                                )
+                                .resourceTypeIds(
+                                        ResourceTypeId.CUSTOMER
+                                )
+                                .fieldDefinitions(definitions)
+                                .build()
+                )
+                .execute()
+                .toCompletableFuture().get();
+        logger.info("Custom Type info: {}", customTypeResponse.getBody().getId());
 
         client.close();
     }
